@@ -118,13 +118,14 @@ function deepMerge<T extends Record<string, unknown>>(
 /**
  * Load plugin configuration from user and project config files, merging them appropriately.
  *
- * Configuration is loaded from two locations:
+ * Configuration is loaded from three locations in order of precedence (lowest to highest):
  * 1. User config: ~/.config/opencode/oh-my-opencode-slim.jsonc or .json (or $XDG_CONFIG_HOME)
  * 2. Project config: <directory>/.opencode/oh-my-opencode-slim.jsonc or .json
+ * 3. Environment config: Path specified via $OH_MY_OPENCODE_SLIM_CONFIG environment variable
  *
  * JSONC format is preferred over JSON (allows comments and trailing commas).
- * Project config takes precedence over user config. Nested objects (agents, tmux) are
- * deep-merged, while top-level arrays are replaced entirely by project config.
+ * Environment config takes highest precedence, followed by project config, then user config.
+ * Nested objects (agents, tmux) are deep-merged, while top-level arrays are replaced entirely.
  *
  * @param directory - Project directory to search for .opencode config
  * @returns Merged plugin configuration (empty object if no configs found)
@@ -161,6 +162,21 @@ export function loadPluginConfig(directory: string): PluginConfig {
       tmux: deepMerge(config.tmux, projectConfig.tmux),
       fallback: deepMerge(config.fallback, projectConfig.fallback),
     };
+  }
+
+  // Load from environment variable if specified
+  const envConfigPath = process.env.OH_MY_OPENCODE_SLIM_CONFIG;
+  if (envConfigPath) {
+    const envConfig = loadConfigFromPath(envConfigPath);
+    if (envConfig) {
+      config = {
+        ...config,
+        ...envConfig,
+        agents: deepMerge(config.agents, envConfig.agents),
+        tmux: deepMerge(config.tmux, envConfig.tmux),
+        fallback: deepMerge(config.fallback, envConfig.fallback),
+      };
+    }
   }
 
   // Override preset from environment variable if set
