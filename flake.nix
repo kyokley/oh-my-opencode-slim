@@ -48,8 +48,20 @@
                 package_dir=$(find "$tmpdir" -mindepth 1 -maxdepth 1 -type d | head -n 1)
                 pkg_name=$(node -p "require('$package_dir/package.json').name")
                 pkg_version=$(node -p "require('$package_dir/package.json').version")
-                mkdir -p "$cache_dir/$pkg_name@$pkg_version@@@1"
-                cp -r "$package_dir/." "$cache_dir/$pkg_name@$pkg_version@@@1/"
+                if [[ "$pkg_name" == @*/* ]]; then
+                  scope=''${pkg_name%%/*}
+                  base=''${pkg_name#*/}
+                  mkdir -p "$cache_dir/$scope" "$cache_dir/$scope/$base"
+                  target_dir="$cache_dir/$scope/$base@$pkg_version@@@1"
+                  link_path="$cache_dir/$scope/$base/$pkg_version@@@1"
+                else
+                  mkdir -p "$cache_dir/$pkg_name"
+                  target_dir="$cache_dir/$pkg_name@$pkg_version@@@1"
+                  link_path="$cache_dir/$pkg_name/$pkg_version@@@1"
+                fi
+                mkdir -p "$target_dir"
+                cp -r "$package_dir/." "$target_dir/"
+                ln -s "$target_dir" "$link_path"
                 rm -rf "$tmpdir"
               '') (builtins.attrNames bunPackages)
             )}
@@ -79,7 +91,10 @@
             export HOME="$TMPDIR/home"
             mkdir -p "$HOME"
             ln -s ${vendorDeps}/node_modules node_modules
-            bun run build
+            patchShebangs node_modules/.bin
+            bun build src/index.ts --outdir dist --target bun --format esm
+            bun build src/cli/index.ts --outdir dist/cli --target bun --format esm
+            tsc --emitDeclarationOnly
             runHook postBuild
           '';
 
