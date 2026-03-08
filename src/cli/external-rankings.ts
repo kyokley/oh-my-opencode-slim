@@ -1,3 +1,4 @@
+import { isPureEnvironment } from '../utils';
 import { buildModelKeyAliases } from './model-key-normalization';
 import type { ExternalModelSignal, ExternalSignalMap } from './types';
 
@@ -215,6 +216,13 @@ export async function fetchExternalModelSignals(options?: {
   signals: ExternalSignalMap;
   warnings: string[];
 }> {
+  if (isPureEnvironment()) {
+    return {
+      signals: {},
+      warnings: ['External ranking signals disabled in pure mode.'],
+    };
+  }
+
   const warnings: string[] = [];
   const aggregate: ExternalSignalMap = {};
 

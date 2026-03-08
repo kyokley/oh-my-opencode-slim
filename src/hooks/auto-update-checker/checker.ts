@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stripJsonComments } from '../../cli/config-manager';
+import { isPureEnvironment } from '../../utils';
 import { log } from '../../utils/logger';
 import {
   INSTALLED_PACKAGE_JSON,
@@ -265,6 +266,10 @@ export function updatePinnedVersion(
 export async function getLatestVersion(
   channel: string = 'latest',
 ): Promise<string | null> {
+  if (isPureEnvironment()) {
+    return null;
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), NPM_FETCH_TIMEOUT);
 

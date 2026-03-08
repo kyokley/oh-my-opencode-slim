@@ -19,7 +19,7 @@ import {
   lsp_goto_definition,
   lsp_rename,
 } from './tools';
-import { startTmuxCheck } from './utils';
+import { isPureEnvironment, startTmuxCheck } from './utils';
 import { log } from './utils/logger';
 
 const OhMyOpenCodeLite: Plugin = async (ctx) => {
@@ -59,7 +59,7 @@ const OhMyOpenCodeLite: Plugin = async (ctx) => {
   // Initialize auto-update checker hook
   const autoUpdateChecker = createAutoUpdateCheckerHook(ctx, {
     showStartupToast: true,
-    autoUpdate: true,
+    autoUpdate: !isPureEnvironment(),
   });
 
   // Initialize phase reminder hook for workflow compliance

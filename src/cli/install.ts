@@ -237,7 +237,15 @@ function argsToConfig(args: InstallArgs): InstallConfig {
   };
 }
 
-import { getEnv } from '../utils';
+import { getEnv, isPureEnvironment } from '../utils';
+
+function isOfflineDiscoveryDisabled(): boolean {
+  return isPureEnvironment();
+}
+
+function printPureModeNotice(feature: string): void {
+  printInfo(`${feature} disabled in pure mode; using static defaults.`);
+}
 
 async function askModelSelection(
   rl: readline.Interface,
@@ -515,17 +523,21 @@ async function runManualSetupMode(
   let availableChutesModels: DiscoveredModel[] | undefined;
 
   if (useOpenCodeFree === 'yes') {
-    printInfo('Refreshing models with: opencode models --refresh --verbose');
-    const discovery = await discoverOpenCodeFreeModels();
-
-    if (discovery.models.length === 0) {
-      printWarning(
-        discovery.error ??
-          'No OpenCode free models found. Continuing without OpenCode free-model assignment.',
-      );
+    if (isOfflineDiscoveryDisabled()) {
+      printPureModeNotice('OpenCode free model refresh');
     } else {
-      availableOpenCodeFreeModels = discovery.models;
-      printSuccess(`Found ${discovery.models.length} OpenCode free models`);
+      printInfo('Refreshing models with: opencode models --refresh --verbose');
+      const discovery = await discoverOpenCodeFreeModels();
+
+      if (discovery.models.length === 0) {
+        printWarning(
+          discovery.error ??
+            'No OpenCode free models found. Continuing without OpenCode free-model assignment.',
+        );
+      } else {
+        availableOpenCodeFreeModels = discovery.models;
+        printSuccess(`Found ${discovery.models.length} OpenCode free models`);
+      }
     }
     console.log();
   }
@@ -581,19 +593,23 @@ async function runManualSetupMode(
   console.log();
 
   if (chutes === 'yes') {
-    printInfo(
-      'Refreshing Chutes model list with: opencode models --refresh --verbose',
-    );
-    const discovery = await discoverProviderModels('chutes');
-
-    if (discovery.models.length === 0) {
-      printWarning(
-        discovery.error ??
-          'No Chutes models found. Continuing without Chutes dynamic assignment.',
-      );
+    if (isOfflineDiscoveryDisabled()) {
+      printPureModeNotice('Chutes model refresh');
     } else {
-      availableChutesModels = discovery.models;
-      printSuccess(`Found ${discovery.models.length} Chutes models`);
+      printInfo(
+        'Refreshing Chutes model list with: opencode models --refresh --verbose',
+      );
+      const discovery = await discoverProviderModels('chutes');
+
+      if (discovery.models.length === 0) {
+        printWarning(
+          discovery.error ??
+            'No Chutes models found. Continuing without Chutes dynamic assignment.',
+        );
+      } else {
+        availableChutesModels = discovery.models;
+        printSuccess(`Found ${discovery.models.length} Chutes models`);
+      }
     }
     console.log();
   }
@@ -833,58 +849,65 @@ async function runInteractiveMode(
     let selectedChutesSecondaryModel: string | undefined;
 
     if (useOpenCodeFree === 'yes') {
-      printInfo('Refreshing models with: opencode models --refresh --verbose');
-      const discovery = await discoverOpenCodeFreeModels();
-
-      if (discovery.models.length === 0) {
-        printWarning(
-          discovery.error ??
-            'No OpenCode free models found. Continuing without OpenCode free-model assignment.',
-        );
-      } else {
-        availableOpenCodeFreeModels = discovery.models;
-
-        const recommendedPrimary =
-          pickBestCodingOpenCodeModel(discovery.models)?.model ??
-          discovery.models[0]?.model;
-
-        if (recommendedPrimary) {
-          printInfo(
-            'This step configures only OpenCode Free primary/support models.',
-          );
-          console.log(`${BOLD}OpenCode Free Models:${RESET}`);
-          selectedOpenCodePrimaryModel = await askModelSelection(
-            rl,
-            discovery.models,
-            recommendedPrimary,
-            'Choose primary model for orchestrator/oracle',
-          );
-        }
-
-        if (selectedOpenCodePrimaryModel) {
-          const recommendedSecondary =
-            pickSupportOpenCodeModel(
-              discovery.models,
-              selectedOpenCodePrimaryModel,
-            )?.model ?? selectedOpenCodePrimaryModel;
-
-          const openCodeSupportList = discovery.models.filter(
-            (model) => model.model !== selectedOpenCodePrimaryModel,
-          );
-          const openCodeSupportDefault =
-            recommendedSecondary === selectedOpenCodePrimaryModel
-              ? (openCodeSupportList[0]?.model ?? recommendedSecondary)
-              : recommendedSecondary;
-
-          selectedOpenCodeSecondaryModel = await askModelSelection(
-            rl,
-            openCodeSupportList,
-            openCodeSupportDefault,
-            'Choose support model for explorer/librarian/fixer',
-          );
-        }
-
+      if (isOfflineDiscoveryDisabled()) {
+        printPureModeNotice('OpenCode free model refresh');
         console.log();
+      } else {
+        printInfo(
+          'Refreshing models with: opencode models --refresh --verbose',
+        );
+        const discovery = await discoverOpenCodeFreeModels();
+
+        if (discovery.models.length === 0) {
+          printWarning(
+            discovery.error ??
+              'No OpenCode free models found. Continuing without OpenCode free-model assignment.',
+          );
+        } else {
+          availableOpenCodeFreeModels = discovery.models;
+
+          const recommendedPrimary =
+            pickBestCodingOpenCodeModel(discovery.models)?.model ??
+            discovery.models[0]?.model;
+
+          if (recommendedPrimary) {
+            printInfo(
+              'This step configures only OpenCode Free primary/support models.',
+            );
+            console.log(`${BOLD}OpenCode Free Models:${RESET}`);
+            selectedOpenCodePrimaryModel = await askModelSelection(
+              rl,
+              discovery.models,
+              recommendedPrimary,
+              'Choose primary model for orchestrator/oracle',
+            );
+          }
+
+          if (selectedOpenCodePrimaryModel) {
+            const recommendedSecondary =
+              pickSupportOpenCodeModel(
+                discovery.models,
+                selectedOpenCodePrimaryModel,
+              )?.model ?? selectedOpenCodePrimaryModel;
+
+            const openCodeSupportList = discovery.models.filter(
+              (model) => model.model !== selectedOpenCodePrimaryModel,
+            );
+            const openCodeSupportDefault =
+              recommendedSecondary === selectedOpenCodePrimaryModel
+                ? (openCodeSupportList[0]?.model ?? recommendedSecondary)
+                : recommendedSecondary;
+
+            selectedOpenCodeSecondaryModel = await askModelSelection(
+              rl,
+              openCodeSupportList,
+              openCodeSupportDefault,
+              'Choose support model for explorer/librarian/fixer',
+            );
+          }
+
+          console.log();
+        }
       }
     }
 
@@ -945,55 +968,62 @@ async function runInteractiveMode(
     console.log();
 
     if (chutes === 'yes') {
-      printInfo(
-        'Refreshing Chutes model list with: opencode models --refresh --verbose',
-      );
-      const discovery = await discoverProviderModels('chutes');
-
-      if (discovery.models.length === 0) {
-        printWarning(
-          discovery.error ??
-            'No Chutes models found. Continuing without Chutes dynamic assignment.',
-        );
-      } else {
-        availableChutesModels = discovery.models;
-
-        const recommendedPrimary =
-          pickBestCodingChutesModel(discovery.models)?.model ??
-          discovery.models[0]?.model;
-
-        if (recommendedPrimary) {
-          console.log(`${BOLD}Chutes Models:${RESET}`);
-          selectedChutesPrimaryModel = await askModelSelection(
-            rl,
-            discovery.models,
-            recommendedPrimary,
-            'Choose Chutes primary model for orchestrator/oracle/designer',
-          );
-        }
-
-        if (selectedChutesPrimaryModel) {
-          const recommendedSecondary =
-            pickSupportChutesModel(discovery.models, selectedChutesPrimaryModel)
-              ?.model ?? selectedChutesPrimaryModel;
-
-          const chutesSupportList = discovery.models.filter(
-            (model) => model.model !== selectedChutesPrimaryModel,
-          );
-          const chutesSupportDefault =
-            recommendedSecondary === selectedChutesPrimaryModel
-              ? (chutesSupportList[0]?.model ?? recommendedSecondary)
-              : recommendedSecondary;
-
-          selectedChutesSecondaryModel = await askModelSelection(
-            rl,
-            chutesSupportList,
-            chutesSupportDefault,
-            'Choose Chutes support model for explorer/librarian/fixer',
-          );
-        }
-
+      if (isOfflineDiscoveryDisabled()) {
+        printPureModeNotice('Chutes model refresh');
         console.log();
+      } else {
+        printInfo(
+          'Refreshing Chutes model list with: opencode models --refresh --verbose',
+        );
+        const discovery = await discoverProviderModels('chutes');
+
+        if (discovery.models.length === 0) {
+          printWarning(
+            discovery.error ??
+              'No Chutes models found. Continuing without Chutes dynamic assignment.',
+          );
+        } else {
+          availableChutesModels = discovery.models;
+
+          const recommendedPrimary =
+            pickBestCodingChutesModel(discovery.models)?.model ??
+            discovery.models[0]?.model;
+
+          if (recommendedPrimary) {
+            console.log(`${BOLD}Chutes Models:${RESET}`);
+            selectedChutesPrimaryModel = await askModelSelection(
+              rl,
+              discovery.models,
+              recommendedPrimary,
+              'Choose Chutes primary model for orchestrator/oracle/designer',
+            );
+          }
+
+          if (selectedChutesPrimaryModel) {
+            const recommendedSecondary =
+              pickSupportChutesModel(
+                discovery.models,
+                selectedChutesPrimaryModel,
+              )?.model ?? selectedChutesPrimaryModel;
+
+            const chutesSupportList = discovery.models.filter(
+              (model) => model.model !== selectedChutesPrimaryModel,
+            );
+            const chutesSupportDefault =
+              recommendedSecondary === selectedChutesPrimaryModel
+                ? (chutesSupportList[0]?.model ?? recommendedSecondary)
+                : recommendedSecondary;
+
+            selectedChutesSecondaryModel = await askModelSelection(
+              rl,
+              chutesSupportList,
+              chutesSupportDefault,
+              'Choose Chutes support model for explorer/librarian/fixer',
+            );
+          }
+
+          console.log();
+        }
       }
     }
 
@@ -1026,7 +1056,11 @@ async function runInteractiveMode(
         );
       }
       console.log();
-      skills = await askYesNo(rl, 'Install recommended skills?', 'yes');
+      if (isPureEnvironment()) {
+        printPureModeNotice('Remote recommended skills');
+      } else {
+        skills = await askYesNo(rl, 'Install recommended skills?', 'yes');
+      }
       console.log();
 
       // Custom skills prompt
@@ -1133,7 +1167,9 @@ async function runInstall(config: InstallConfig): Promise<number> {
       totalSteps,
       'Refreshing OpenCode free models (opencode/*)...',
     );
-    const discovery = await discoverOpenCodeFreeModels();
+    const discovery = isOfflineDiscoveryDisabled()
+      ? { models: [], error: 'OpenCode model refresh disabled in pure mode.' }
+      : await discoverOpenCodeFreeModels();
     if (discovery.models.length === 0) {
       printWarning(
         discovery.error ??
@@ -1197,7 +1233,9 @@ async function runInstall(config: InstallConfig): Promise<number> {
     (resolvedConfig.availableChutesModels?.length ?? 0) === 0
   ) {
     printStep(step++, totalSteps, 'Refreshing Chutes models (chutes/*)...');
-    const discovery = await discoverProviderModels('chutes');
+    const discovery = isOfflineDiscoveryDisabled()
+      ? { models: [], error: 'Chutes model refresh disabled in pure mode.' }
+      : await discoverProviderModels('chutes');
     if (discovery.models.length === 0) {
       printWarning(
         discovery.error ??
@@ -1293,7 +1331,9 @@ async function runInstall(config: InstallConfig): Promise<number> {
 
   if (hasAnyEnabledProvider) {
     printStep(step++, totalSteps, 'Resolving dynamic model assignments...');
-    const catalogDiscovery = await discoverModelCatalog();
+    const catalogDiscovery = isOfflineDiscoveryDisabled()
+      ? { models: [], error: 'Dynamic model discovery disabled in pure mode.' }
+      : await discoverModelCatalog();
     if (catalogDiscovery.models.length === 0) {
       printWarning(
         catalogDiscovery.error ??
@@ -1362,7 +1402,11 @@ async function runInstall(config: InstallConfig): Promise<number> {
           printSuccess(`Installed: ${skill.name}`);
           skillsInstalled++;
         } else {
-          printWarning(`Failed to install: ${skill.name}`);
+          printWarning(
+            isPureEnvironment()
+              ? `Skipped in pure mode: ${skill.name}`
+              : `Failed to install: ${skill.name}`,
+          );
         }
       }
       printSuccess(

@@ -48,6 +48,23 @@ https://raw.githubusercontent.com/alvinunreal/oh-my-opencode-slim/refs/heads/mas
 
 **Detailed installation guide:** [docs/installation.md](docs/installation.md)
 
+### Nix
+
+For pure Nix environments, build and run the packaged CLI instead of `bunx`:
+
+```bash
+nix build
+./result/bin/oh-my-opencode-slim --help
+```
+
+The Nix package runs with `OH_MY_OPENCODE_SLIM_PURE=1`, which means:
+- no auto-update
+- no runtime downloads for ripgrep or ast-grep
+- no remote recommended skill installation
+- no live model refresh during install
+
+`opencode` must already be installed separately and available on `PATH`.
+
 **Additional guides:**
 - **[Antigravity Setup](docs/antigravity.md)** - Complete guide for Antigravity provider configuration  
 - **[Tmux Integration](docs/tmux-integration.md)** - Real-time agent monitoring with tmux

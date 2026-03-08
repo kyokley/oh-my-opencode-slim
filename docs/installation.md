@@ -21,6 +21,25 @@ Run the interactive installer:
 bunx oh-my-opencode-slim@latest install
 ```
 
+### Pure Nix Install
+
+If you are installing in a pure Nix environment, use the packaged CLI instead of
+`bunx`:
+
+```bash
+nix build
+./result/bin/oh-my-opencode-slim install --no-tui --openai=yes --skills=no
+```
+
+Pure mode disables:
+- auto-update checks that query npm
+- runtime downloads for ripgrep and ast-grep
+- remote recommended skill installation via `npx`
+- live model discovery and external ranking fetches
+
+In pure mode, `opencode` must already be installed separately and available on
+`PATH`.
+
 Or use non-interactive mode:
 
 ```bash

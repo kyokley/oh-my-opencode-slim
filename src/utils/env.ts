@@ -10,3 +10,12 @@ export function getEnv(name: string): string | undefined {
     ? processValue
     : undefined;
 }
+
+export function isEnvEnabled(name: string): boolean {
+  const value = getEnv(name)?.trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+}
+
+export function isPureEnvironment(): boolean {
+  return isEnvEnabled('OH_MY_OPENCODE_SLIM_PURE');
+}

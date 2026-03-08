@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
+import { isPureEnvironment } from '../../utils';
 import { getCachedBinaryPath } from './downloader';
 import { CLI_LANGUAGES } from './types';
 
@@ -204,7 +205,11 @@ export function formatEnvironmentCheck(result: EnvironmentCheckResult): string {
     if (result.cli.error) {
       lines.push(`  Error: ${result.cli.error}`);
     }
-    lines.push(`  Install: bun add -D @ast-grep/cli`);
+    lines.push(
+      isPureEnvironment()
+        ? '  Install: provide ast-grep on PATH (for Nix use pkgs.ast-grep)'
+        : '  Install: bun add -D @ast-grep/cli',
+    );
   }
 
   lines.push('');

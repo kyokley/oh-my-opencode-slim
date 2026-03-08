@@ -1,6 +1,15 @@
 import { describe, expect, mock, test } from 'bun:test';
 import * as fs from 'node:fs';
-import { extractChannel, findPluginEntry, getLocalDevVersion } from './checker';
+import {
+  extractChannel,
+  findPluginEntry,
+  getLatestVersion,
+  getLocalDevVersion,
+} from './checker';
+
+mock.module('../../utils', () => ({
+  isPureEnvironment: mock(() => false),
+}));
 
 // Mock the dependencies
 mock.module('./constants', () => ({
@@ -111,6 +120,17 @@ describe('auto-update-checker/checker', () => {
       expect(entry).not.toBeNull();
       expect(entry?.isPinned).toBe(true);
       expect(entry?.pinnedVersion).toBe('1.0.0');
+    });
+  });
+
+  describe('getLatestVersion', () => {
+    test('returns null in pure mode', async () => {
+      const utils = await import('../../utils');
+      (utils.isPureEnvironment as ReturnType<typeof mock>).mockReturnValue(
+        true,
+      );
+
+      expect(await getLatestVersion()).toBeNull();
     });
   });
 });

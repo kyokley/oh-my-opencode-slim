@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { isPureEnvironment } from '../../utils';
 import {
   downloadAndInstallRipgrep,
   getInstalledRipgrepPath,
@@ -106,6 +107,10 @@ export async function resolveGrepCliWithAutoInstall(): Promise<ResolvedCli> {
   const current = resolveGrepCli();
 
   if (current.backend === 'rg') {
+    return current;
+  }
+
+  if (isPureEnvironment()) {
     return current;
   }
 

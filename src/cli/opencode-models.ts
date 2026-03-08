@@ -1,3 +1,4 @@
+import { isPureEnvironment } from '../utils';
 import { resolveOpenCodePath } from './system';
 import type { DiscoveredModel, OpenCodeFreeModel } from './types';
 
@@ -166,6 +167,13 @@ async function discoverModelsByProvider(
   models: DiscoveredModel[];
   error?: string;
 }> {
+  if (isPureEnvironment()) {
+    return {
+      models: [],
+      error: 'Model discovery disabled in pure mode.',
+    };
+  }
+
   try {
     const opencodePath = resolveOpenCodePath();
     const proc = Bun.spawn([opencodePath, 'models', '--refresh', '--verbose'], {
@@ -199,6 +207,13 @@ export async function discoverModelCatalog(): Promise<{
   models: DiscoveredModel[];
   error?: string;
 }> {
+  if (isPureEnvironment()) {
+    return {
+      models: [],
+      error: 'Model discovery disabled in pure mode.',
+    };
+  }
+
   try {
     const opencodePath = resolveOpenCodePath();
     const proc = Bun.spawn([opencodePath, 'models', '--refresh', '--verbose'], {

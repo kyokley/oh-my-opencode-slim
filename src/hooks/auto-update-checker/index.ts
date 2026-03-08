@@ -1,4 +1,5 @@
 import type { PluginInput } from '@opencode-ai/plugin';
+import { isPureEnvironment } from '../../utils';
 import { log } from '../../utils/logger';
 import { invalidatePackage } from './cache';
 import {
@@ -82,6 +83,11 @@ async function runBackgroundUpdateCheck(
   ctx: PluginInput,
   autoUpdate: boolean,
 ): Promise<void> {
+  if (isPureEnvironment()) {
+    log('[auto-update-checker] Disabled in pure environment');
+    return;
+  }
+
   const pluginInfo = findPluginEntry(ctx.directory);
   if (!pluginInfo) {
     log('[auto-update-checker] Plugin not found in config');
@@ -185,6 +191,11 @@ async function runBackgroundUpdateCheck(
  * @returns True if the installation succeeded within the timeout.
  */
 async function runBunInstallSafe(ctx: PluginInput): Promise<boolean> {
+  if (isPureEnvironment()) {
+    log('[auto-update-checker] Skipping bun install in pure environment');
+    return false;
+  }
+
   try {
     const proc = Bun.spawn(['bun', 'install'], {
       cwd: ctx.directory,

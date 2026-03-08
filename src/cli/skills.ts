@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { isPureEnvironment } from '../utils';
 
 /**
  * A recommended skill to install via `npx skills add`.
@@ -49,6 +50,13 @@ export const RECOMMENDED_SKILLS: RecommendedSkill[] = [
  * @returns True if installation succeeded, false otherwise
  */
 export function installSkill(skill: RecommendedSkill): boolean {
+  if (isPureEnvironment()) {
+    console.log(
+      `Skipping remote skill install for ${skill.name} in pure mode.`,
+    );
+    return false;
+  }
+
   const args = [
     'skills',
     'add',

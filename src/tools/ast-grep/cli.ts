@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { spawn } from 'bun';
+import { isPureEnvironment } from '../../utils';
 import {
   DEFAULT_MAX_MATCHES,
   DEFAULT_MAX_OUTPUT_BYTES,
@@ -41,10 +42,12 @@ export async function getAstGrepPath(): Promise<string | null> {
       return syncPath;
     }
 
-    const downloadedPath = await ensureAstGrepBinary();
-    if (downloadedPath) {
-      setSgCliPath(downloadedPath);
-      return downloadedPath;
+    if (!isPureEnvironment()) {
+      const downloadedPath = await ensureAstGrepBinary();
+      if (downloadedPath) {
+        setSgCliPath(downloadedPath);
+        return downloadedPath;
+      }
     }
 
     return null;
@@ -149,10 +152,12 @@ export async function runSg(options: RunOptions): Promise<SgResult> {
       nodeError.message?.includes('ENOENT') ||
       nodeError.message?.includes('not found')
     ) {
-      const downloadedPath = await ensureAstGrepBinary();
-      if (downloadedPath) {
-        setSgCliPath(downloadedPath);
-        return runSg(options);
+      if (!isPureEnvironment()) {
+        const downloadedPath = await ensureAstGrepBinary();
+        if (downloadedPath) {
+          setSgCliPath(downloadedPath);
+          return runSg(options);
+        }
       } else {
         return {
           matches: [],
@@ -160,12 +165,22 @@ export async function runSg(options: RunOptions): Promise<SgResult> {
           truncated: false,
           error:
             `ast-grep CLI binary not found.\n\n` +
-            `Auto-download failed. Manual install options:\n` +
-            `  bun add -D @ast-grep/cli\n` +
-            `  cargo install ast-grep --locked\n` +
-            `  brew install ast-grep`,
+            `Pure mode requires ast-grep to be available on PATH.\n` +
+            `Install it via your system package manager, e.g. Nix pkgs.ast-grep.`,
         };
       }
+
+      return {
+        matches: [],
+        totalMatches: 0,
+        truncated: false,
+        error:
+          `ast-grep CLI binary not found.\n\n` +
+          `Auto-download failed. Manual install options:\n` +
+          `  bun add -D @ast-grep/cli\n` +
+          `  cargo install ast-grep --locked\n` +
+          `  brew install ast-grep`,
+      };
     }
 
     return {

@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'bun:test';
-import { getSkillPermissionsForAgent } from './skills';
+import { describe, expect, it, mock } from 'bun:test';
+
+mock.module('../utils', () => ({
+  isPureEnvironment: mock(() => false),
+}));
+
+import { getSkillPermissionsForAgent, installSkill } from './skills';
 
 describe('skills permissions', () => {
   it('should allow all skills for orchestrator by default', () => {
@@ -41,5 +46,20 @@ describe('skills permissions', () => {
   it('should honor wildcard in explicit list', () => {
     const wildcardPerms = getSkillPermissionsForAgent('designer', ['*']);
     expect(wildcardPerms['*']).toBe('allow');
+  });
+
+  it('skips remote installation in pure mode', async () => {
+    const utils = await import('../utils');
+    (utils.isPureEnvironment as ReturnType<typeof mock>).mockReturnValue(true);
+
+    const result = installSkill({
+      name: 'simplify',
+      repo: 'https://example.com/repo',
+      skillName: 'simplify',
+      allowedAgents: ['orchestrator'],
+      description: 'test skill',
+    });
+
+    expect(result).toBe(false);
   });
 });
