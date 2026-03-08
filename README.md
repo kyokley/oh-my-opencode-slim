@@ -66,6 +66,12 @@ The Nix package runs with `OH_MY_OPENCODE_SLIM_PURE=1`, which means:
 The flake uses `bun2nix`-generated metadata in `bun.nix` to keep dependency
 fetching pure during `nix build`.
 
+When `bun.lock` changes, regenerate `bun.nix` with:
+
+```bash
+./scripts/regenerate-bun-nix.sh
+```
+
 `opencode` must already be installed separately and available on `PATH`.
 
 **Additional guides:**
