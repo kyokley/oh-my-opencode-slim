@@ -63,6 +63,13 @@ nix build
 ./result/bin/oh-my-opencode-slim --help
 ```
 
+If your OpenCode executable is installed under a different name or outside the
+wrapped `PATH`, pass it explicitly:
+
+```bash
+nix run . -- install --opencode-path=$(which my-opencode)
+```
+
 The Nix package runs with `OH_MY_OPENCODE_SLIM_PURE=1`, which means:
 - no auto-update
 - no runtime downloads for ripgrep or ast-grep

@@ -77,6 +77,21 @@ export function resolveOpenCodePath(): string {
 }
 
 export async function isOpenCodeInstalled(): Promise<boolean> {
+  if (cachedOpenCodePath) {
+    try {
+      const proc = Bun.spawn([cachedOpenCodePath, '--version'], {
+        stdout: 'pipe',
+        stderr: 'pipe',
+      });
+      await proc.exited;
+      if (proc.exitCode === 0) {
+        return true;
+      }
+    } catch {
+      // Fall back to auto-detection when explicit path is invalid
+    }
+  }
+
   const paths = getOpenCodePaths();
 
   for (const opencodePath of paths) {

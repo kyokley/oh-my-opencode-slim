@@ -77,6 +77,29 @@ describe('system', () => {
     setOpenCodePath(null);
   });
 
+  test('isOpenCodeInstalled checks explicit path first', async () => {
+    const originalSpawn = Bun.spawn;
+    const spawnMock = mock((cmd: string[]) => {
+      expect(cmd[0]).toBe('/tmp/custom-opencode');
+      return {
+        stdout: new ReadableStream(),
+        stderr: new ReadableStream(),
+        exited: Promise.resolve(0),
+        exitCode: 0,
+      };
+    });
+
+    setOpenCodePath('/tmp/custom-opencode');
+    Bun.spawn = spawnMock as typeof Bun.spawn;
+
+    try {
+      expect(await isOpenCodeInstalled()).toBe(true);
+    } finally {
+      Bun.spawn = originalSpawn;
+      setOpenCodePath(null);
+    }
+  });
+
   test('parseOpenCodeModelsVerboseOutput extracts only opencode free models', () => {
     const output = `opencode/glm-4.7-free
 {

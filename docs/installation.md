@@ -37,6 +37,13 @@ nix build
 ./result/bin/oh-my-opencode-slim install --no-tui --openai=yes --skills=no
 ```
 
+If your OpenCode executable is installed under a different name or outside the
+wrapped `PATH`, pass it explicitly:
+
+```bash
+nix run . -- install --opencode-path=$(which my-opencode)
+```
+
 Pure mode disables:
 - auto-update checks that query npm
 - runtime downloads for ripgrep and ast-grep
