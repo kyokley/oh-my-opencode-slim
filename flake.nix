@@ -21,6 +21,21 @@
           tmux
         ];
 
+        vendorDeps = pkgs.runCommand "${pname}-vendor-deps" {
+          nativeBuildInputs = [ pkgs.bun ];
+          src = ./.;
+        } ''
+          set -euo pipefail
+
+          export HOME="$TMPDIR/home"
+          mkdir -p "$HOME"
+          cp -r "$src" source
+          chmod -R u+w source
+          cd source
+          bun install --frozen-lockfile
+          cp -r node_modules $out
+        '';
+
         pkg = pkgs.stdenv.mkDerivation {
           inherit pname version;
           src = ./.;
@@ -36,7 +51,7 @@
             runHook preBuild
             export HOME="$TMPDIR/home"
             mkdir -p "$HOME"
-            bun install --frozen-lockfile
+            ln -s ${vendorDeps} node_modules
             bun run build
             runHook postBuild
           '';
@@ -49,6 +64,7 @@
             mkdir -p $out/lib/${pname}/src
             cp -r src/skills $out/lib/${pname}/src/
             cp package.json README.md LICENSE $out/lib/${pname}/
+            cp -r ${vendorDeps} $out/lib/${pname}/node_modules
 
             mkdir -p $out/bin
             makeWrapper ${pkgs.bun}/bin/bun $out/bin/${pname} \
