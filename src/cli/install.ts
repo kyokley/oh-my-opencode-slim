@@ -1524,9 +1524,7 @@ async function runInstall(config: InstallConfig): Promise<number> {
 }
 
 export async function install(args: InstallArgs): Promise<number> {
-  if (args.opencodePath) {
-    setOpenCodePath(args.opencodePath);
-  }
+  setOpenCodePath(args.opencodePath ?? null);
 
   // Non-interactive mode: all args must be provided
   if (!args.tui) {
