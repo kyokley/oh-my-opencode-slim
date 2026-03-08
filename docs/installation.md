@@ -37,6 +37,9 @@ Pure mode disables:
 - remote recommended skill installation via `npx`
 - live model discovery and external ranking fetches
 
+The flake uses `bun2nix` metadata from `bun.nix`, so npm tarballs are fetched by
+Nix rather than downloaded during the build sandbox.
+
 In pure mode, `opencode` must already be installed separately and available on
 `PATH`.
 

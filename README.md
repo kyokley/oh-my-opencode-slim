@@ -63,6 +63,9 @@ The Nix package runs with `OH_MY_OPENCODE_SLIM_PURE=1`, which means:
 - no remote recommended skill installation
 - no live model refresh during install
 
+The flake uses `bun2nix`-generated metadata in `bun.nix` to keep dependency
+fetching pure during `nix build`.
+
 `opencode` must already be installed separately and available on `PATH`.
 
 **Additional guides:**
