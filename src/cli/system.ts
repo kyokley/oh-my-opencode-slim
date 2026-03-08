@@ -2,6 +2,10 @@ import { statSync } from 'node:fs';
 
 let cachedOpenCodePath: string | null = null;
 
+export function setOpenCodePath(path: string | null): void {
+  cachedOpenCodePath = path;
+}
+
 function getOpenCodePaths(): string[] {
   const home = process.env.HOME || process.env.USERPROFILE || '';
 

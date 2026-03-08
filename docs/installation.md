@@ -21,6 +21,12 @@ Run the interactive installer:
 bunx oh-my-opencode-slim@latest install
 ```
 
+If `opencode` is installed outside `PATH`, pass its executable path explicitly:
+
+```bash
+bunx oh-my-opencode-slim@latest install --opencode-path=/custom/bin/opencode
+```
+
 ### Pure Nix Install
 
 If you are installing in a pure Nix environment, use the packaged CLI instead of

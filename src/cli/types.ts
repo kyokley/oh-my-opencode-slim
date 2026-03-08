@@ -2,6 +2,7 @@ export type BooleanArg = 'yes' | 'no';
 
 export interface InstallArgs {
   tui: boolean;
+  opencodePath?: string;
   kimi?: BooleanArg;
   openai?: BooleanArg;
   anthropic?: BooleanArg;

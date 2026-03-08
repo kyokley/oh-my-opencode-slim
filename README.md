@@ -21,6 +21,12 @@ The installer can refresh and use OpenCode free models directly:
 bunx oh-my-opencode-slim@latest install --no-tui --kimi=yes --openai=yes --antigravity=yes --chutes=yes --opencode-free=yes --opencode-free-model=auto --tmux=no --skills=yes
 ```
 
+If `opencode` is not on `PATH`, pass an explicit executable path:
+
+```bash
+bunx oh-my-opencode-slim@latest install --opencode-path=/custom/bin/opencode
+```
+
 Then authenticate:
 
 ```bash

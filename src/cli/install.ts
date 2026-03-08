@@ -19,6 +19,7 @@ import {
   pickBestCodingOpenCodeModel,
   pickSupportChutesModel,
   pickSupportOpenCodeModel,
+  setOpenCodePath,
   writeLiteConfig,
 } from './config-manager';
 import { CUSTOM_SKILLS, installCustomSkill } from './custom-skills';
@@ -1523,6 +1524,10 @@ async function runInstall(config: InstallConfig): Promise<number> {
 }
 
 export async function install(args: InstallArgs): Promise<number> {
+  if (args.opencodePath) {
+    setOpenCodePath(args.opencodePath);
+  }
+
   // Non-interactive mode: all args must be provided
   if (!args.tui) {
     const requiredArgs = [

@@ -10,6 +10,8 @@ function parseArgs(args: string[]): InstallArgs {
   for (const arg of args) {
     if (arg === '--no-tui') {
       result.tui = false;
+    } else if (arg.startsWith('--opencode-path=')) {
+      result.opencodePath = arg.slice('--opencode-path='.length);
     } else if (arg.startsWith('--kimi=')) {
       result.kimi = arg.split('=')[1] as BooleanArg;
     } else if (arg.startsWith('--openai=')) {
@@ -59,6 +61,7 @@ Usage: bunx oh-my-opencode-slim install [OPTIONS]
        bunx oh-my-opencode-slim models [OPTIONS]
 
 Options:
+  --opencode-path        Explicit path to the opencode executable
   --kimi=yes|no          Kimi API access (yes/no)
   --openai=yes|no        OpenAI API access (yes/no)
   --anthropic=yes|no     Anthropic access (yes/no)
@@ -81,7 +84,7 @@ Options:
 Examples:
   bunx oh-my-opencode-slim install
   bunx oh-my-opencode-slim models
-  bunx oh-my-opencode-slim install --no-tui --kimi=yes --openai=yes --anthropic=yes --copilot=no --zai-plan=no --antigravity=yes --chutes=no --opencode-free=yes --balanced-spend=yes --opencode-free-model=auto --aa-key=YOUR_AA_KEY --openrouter-key=YOUR_OR_KEY --tmux=no --skills=yes
+  bunx oh-my-opencode-slim install --opencode-path=/custom/bin/opencode --no-tui --kimi=yes --openai=yes --anthropic=yes --copilot=no --zai-plan=no --antigravity=yes --chutes=no --opencode-free=yes --balanced-spend=yes --opencode-free-model=auto --aa-key=YOUR_AA_KEY --openrouter-key=YOUR_OR_KEY --tmux=no --skills=yes
 `);
 }
 

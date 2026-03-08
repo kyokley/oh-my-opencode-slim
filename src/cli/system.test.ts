@@ -11,6 +11,8 @@ import {
   getOpenCodeVersion,
   isOpenCodeInstalled,
   isTmuxInstalled,
+  resolveOpenCodePath,
+  setOpenCodePath,
 } from './system';
 
 describe('system', () => {
@@ -67,6 +69,12 @@ describe('system', () => {
     } else {
       expect(version).toBeNull();
     }
+  });
+
+  test('resolveOpenCodePath prefers explicitly configured path', () => {
+    setOpenCodePath('/tmp/custom-opencode');
+    expect(resolveOpenCodePath()).toBe('/tmp/custom-opencode');
+    setOpenCodePath(null);
   });
 
   test('parseOpenCodeModelsVerboseOutput extracts only opencode free models', () => {
