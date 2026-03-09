@@ -783,6 +783,141 @@ describe('environment variable config path override', () => {
   });
 });
 
+describe('OPENCODE_CONFIG sibling fallback', () => {
+  let tempDir: string;
+  let originalEnv: typeof process.env;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'opencode-config-test-'));
+    originalEnv = { ...process.env };
+    process.env.XDG_CONFIG_HOME = path.join(tempDir, 'user-config');
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    process.env = originalEnv;
+  });
+
+  test('loads config from sibling of OPENCODE_CONFIG', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const opencodeConfigDir = path.join(tempDir, 'nix-store-configs');
+    fs.mkdirSync(projectDir, { recursive: true });
+    fs.mkdirSync(opencodeConfigDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(opencodeConfigDir, 'opencode.json'),
+      JSON.stringify({ plugin: ['oh-my-opencode-slim'] }),
+    );
+    fs.writeFileSync(
+      path.join(opencodeConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        agents: { oracle: { model: 'sibling-model' } },
+      }),
+    );
+
+    process.env.OPENCODE_CONFIG = path.join(opencodeConfigDir, 'opencode.json');
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.oracle?.model).toBe('sibling-model');
+  });
+
+  test('prefers sibling .jsonc over .json', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const opencodeConfigDir = path.join(tempDir, 'nix-store-configs');
+    fs.mkdirSync(projectDir, { recursive: true });
+    fs.mkdirSync(opencodeConfigDir, { recursive: true });
+
+    fs.writeFileSync(path.join(opencodeConfigDir, 'opencode.json'), '{}');
+    fs.writeFileSync(
+      path.join(opencodeConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        agents: { oracle: { model: 'json-model' } },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(opencodeConfigDir, 'oh-my-opencode-slim.jsonc'),
+      `{
+        "agents": { "oracle": { "model": "jsonc-model" } }
+      }`,
+    );
+
+    process.env.OPENCODE_CONFIG = path.join(opencodeConfigDir, 'opencode.json');
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.oracle?.model).toBe('jsonc-model');
+  });
+
+  test('explicit OH_MY_OPENCODE_SLIM_CONFIG overrides sibling fallback', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const opencodeConfigDir = path.join(tempDir, 'nix-store-configs');
+    fs.mkdirSync(projectDir, { recursive: true });
+    fs.mkdirSync(opencodeConfigDir, { recursive: true });
+
+    fs.writeFileSync(path.join(opencodeConfigDir, 'opencode.json'), '{}');
+    fs.writeFileSync(
+      path.join(opencodeConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        agents: { oracle: { model: 'sibling-model' } },
+      }),
+    );
+
+    const explicitConfigPath = path.join(tempDir, 'explicit.json');
+    fs.writeFileSync(
+      explicitConfigPath,
+      JSON.stringify({
+        agents: { oracle: { model: 'explicit-model' } },
+      }),
+    );
+
+    process.env.OPENCODE_CONFIG = path.join(opencodeConfigDir, 'opencode.json');
+    process.env.OH_MY_OPENCODE_SLIM_CONFIG = explicitConfigPath;
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.oracle?.model).toBe('explicit-model');
+  });
+
+  test('sibling fallback overrides project config with deep merge', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    const opencodeConfigDir = path.join(tempDir, 'nix-store-configs');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.mkdirSync(opencodeConfigDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        agents: { oracle: { model: 'project-model', temperature: 0.4 } },
+      }),
+    );
+    fs.writeFileSync(path.join(opencodeConfigDir, 'opencode.json'), '{}');
+    fs.writeFileSync(
+      path.join(opencodeConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        agents: { oracle: { temperature: 0.9 } },
+      }),
+    );
+
+    process.env.OPENCODE_CONFIG = path.join(opencodeConfigDir, 'opencode.json');
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.oracle?.model).toBe('project-model');
+    expect(config.agents?.oracle?.temperature).toBe(0.9);
+  });
+
+  test('handles missing OPENCODE_CONFIG sibling gracefully', () => {
+    const projectDir = path.join(tempDir, 'project');
+    fs.mkdirSync(projectDir, { recursive: true });
+
+    process.env.OPENCODE_CONFIG = path.join(
+      tempDir,
+      'missing',
+      'opencode.json',
+    );
+
+    expect(loadPluginConfig(projectDir)).toEqual({});
+  });
+});
+
 describe('JSONC config support', () => {
   let tempDir: string;
   let originalEnv: typeof process.env;

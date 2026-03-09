@@ -89,6 +89,14 @@ function resolveEnvConfigPath(): string | null {
   return findConfigPath(configuredPath);
 }
 
+function resolveSiblingOpencodeConfigPath(): string | null {
+  const opencodeConfigPath = getEnv('OPENCODE_CONFIG');
+  if (!opencodeConfigPath) return null;
+
+  const configDir = path.dirname(opencodeConfigPath);
+  return findConfigPath(path.join(configDir, 'oh-my-opencode-slim'));
+}
+
 /**
  * Recursively merge two objects, with override values taking precedence.
  * For nested objects, merges recursively. For arrays and primitives, override replaces base.
@@ -178,17 +186,19 @@ export function loadPluginConfig(directory: string): PluginConfig {
     };
   }
 
-  // Load from environment variable if specified
-  const envConfigPath = resolveEnvConfigPath();
-  if (envConfigPath) {
-    const envConfig = loadConfigFromPath(envConfigPath);
-    if (envConfig) {
+  // Load from environment variable if specified, otherwise fall back to
+  // a config file colocated with OPENCODE_CONFIG (useful for Nix store setups).
+  const runtimeConfigPath =
+    resolveEnvConfigPath() ?? resolveSiblingOpencodeConfigPath();
+  if (runtimeConfigPath) {
+    const runtimeConfig = loadConfigFromPath(runtimeConfigPath);
+    if (runtimeConfig) {
       config = {
         ...config,
-        ...envConfig,
-        agents: deepMerge(config.agents, envConfig.agents),
-        tmux: deepMerge(config.tmux, envConfig.tmux),
-        fallback: deepMerge(config.fallback, envConfig.fallback),
+        ...runtimeConfig,
+        agents: deepMerge(config.agents, runtimeConfig.agents),
+        tmux: deepMerge(config.tmux, runtimeConfig.tmux),
+        fallback: deepMerge(config.fallback, runtimeConfig.fallback),
       };
     }
   }
