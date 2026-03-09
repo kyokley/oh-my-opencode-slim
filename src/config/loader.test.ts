@@ -705,6 +705,84 @@ describe('environment variable preset override', () => {
   });
 });
 
+describe('environment variable config path override', () => {
+  let tempDir: string;
+  let originalEnv: typeof process.env;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-config-test-'));
+    originalEnv = { ...process.env };
+    process.env.XDG_CONFIG_HOME = path.join(tempDir, 'user-config');
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    process.env = originalEnv;
+  });
+
+  test('loads config from explicit .json path in environment variable', () => {
+    const projectDir = path.join(tempDir, 'project');
+    fs.mkdirSync(projectDir, { recursive: true });
+
+    const envConfigPath = path.join(tempDir, 'env-config.json');
+    fs.writeFileSync(
+      envConfigPath,
+      JSON.stringify({
+        agents: { oracle: { model: 'env-model' } },
+      }),
+    );
+
+    process.env.OH_MY_OPENCODE_SLIM_CONFIG = envConfigPath;
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.oracle?.model).toBe('env-model');
+  });
+
+  test('loads config from extensionless base path in environment variable', () => {
+    const projectDir = path.join(tempDir, 'project');
+    fs.mkdirSync(projectDir, { recursive: true });
+
+    const envConfigBasePath = path.join(tempDir, 'custom-config');
+    fs.writeFileSync(
+      `${envConfigBasePath}.jsonc`,
+      `{
+        "agents": { "explorer": { "model": "env-jsonc-model" } }
+      }`,
+    );
+
+    process.env.OH_MY_OPENCODE_SLIM_CONFIG = envConfigBasePath;
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.explorer?.model).toBe('env-jsonc-model');
+  });
+
+  test('environment config path overrides project config', () => {
+    const projectDir = path.join(tempDir, 'project');
+    const projectConfigDir = path.join(projectDir, '.opencode');
+    fs.mkdirSync(projectConfigDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectConfigDir, 'oh-my-opencode-slim.json'),
+      JSON.stringify({
+        agents: { oracle: { model: 'project-model', temperature: 0.4 } },
+      }),
+    );
+
+    const envConfigPath = path.join(tempDir, 'override.json');
+    fs.writeFileSync(
+      envConfigPath,
+      JSON.stringify({
+        agents: { oracle: { temperature: 0.9 } },
+      }),
+    );
+
+    process.env.OH_MY_OPENCODE_SLIM_CONFIG = envConfigPath;
+
+    const config = loadPluginConfig(projectDir);
+    expect(config.agents?.oracle?.model).toBe('project-model');
+    expect(config.agents?.oracle?.temperature).toBe(0.9);
+  });
+});
+
 describe('JSONC config support', () => {
   let tempDir: string;
   let originalEnv: typeof process.env;

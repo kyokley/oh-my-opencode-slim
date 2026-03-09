@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { stripJsonComments } from '../cli/config-io';
+import { getEnv } from '../utils/env';
 import { type PluginConfig, PluginConfigSchema } from './schema';
 
 const PROMPTS_DIR_NAME = 'oh-my-opencode-slim';
@@ -76,6 +77,18 @@ function findConfigPath(basePath: string): string | null {
   return null;
 }
 
+function resolveEnvConfigPath(): string | null {
+  const configuredPath = getEnv('OH_MY_OPENCODE_SLIM_CONFIG');
+  if (!configuredPath) return null;
+
+  const extension = path.extname(configuredPath).toLowerCase();
+  if (extension === '.json' || extension === '.jsonc') {
+    return configuredPath;
+  }
+
+  return findConfigPath(configuredPath);
+}
+
 /**
  * Recursively merge two objects, with override values taking precedence.
  * For nested objects, merges recursively. For arrays and primitives, override replaces base.
@@ -121,7 +134,8 @@ function deepMerge<T extends Record<string, unknown>>(
  * Configuration is loaded from three locations in order of precedence (lowest to highest):
  * 1. User config: ~/.config/opencode/oh-my-opencode-slim.jsonc or .json (or $XDG_CONFIG_HOME)
  * 2. Project config: <directory>/.opencode/oh-my-opencode-slim.jsonc or .json
- * 3. Environment config: Path specified via $OH_MY_OPENCODE_SLIM_CONFIG environment variable
+ * 3. Environment config: Path specified via
+ *    $OH_MY_OPENCODE_SLIM_CONFIG environment variable
  *
  * JSONC format is preferred over JSON (allows comments and trailing commas).
  * Environment config takes highest precedence, followed by project config, then user config.
@@ -165,7 +179,7 @@ export function loadPluginConfig(directory: string): PluginConfig {
   }
 
   // Load from environment variable if specified
-  const envConfigPath = process.env.OH_MY_OPENCODE_SLIM_CONFIG;
+  const envConfigPath = resolveEnvConfigPath();
   if (envConfigPath) {
     const envConfig = loadConfigFromPath(envConfigPath);
     if (envConfig) {
@@ -180,7 +194,7 @@ export function loadPluginConfig(directory: string): PluginConfig {
   }
 
   // Override preset from environment variable if set
-  const envPreset = process.env.OH_MY_OPENCODE_SLIM_PRESET;
+  const envPreset = getEnv('OH_MY_OPENCODE_SLIM_PRESET');
   if (envPreset) {
     config.preset = envPreset;
   }
