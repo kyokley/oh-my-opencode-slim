@@ -129,7 +129,6 @@
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             bun
-            bun2nix
             nodejs
             typescript
             biome

@@ -49,13 +49,13 @@
     "release:major": "npm version major && git push --follow-tags && npm publish"
   },
   "dependencies": {
-    "@ast-grep/cli": "^0.40.0",
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "@opencode-ai/plugin": "^1.2.6",
-    "@opencode-ai/sdk": "^1.2.6",
-    "vscode-jsonrpc": "^8.2.0",
+    "@ast-grep/cli": "^0.40.5",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@opencode-ai/plugin": "^1.14.30",
+    "@opencode-ai/sdk": "^1.14.30",
+    "vscode-jsonrpc": "^8.2.1",
     "vscode-languageserver-protocol": "^3.17.5",
-    "zod": "^4.3.6"
+    "zod": "^4.4.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
