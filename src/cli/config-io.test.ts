@@ -120,6 +120,38 @@ describe('config-io', () => {
     expect(saved.plugin.length).toBe(2);
   });
 
+  test('addPluginToOpenCodeConfig honors OPENCODE_PLUGIN_PATH override', async () => {
+    const configPath = join(tmpDir, 'opencode', 'opencode.json');
+    paths.ensureConfigDir();
+    process.env.OPENCODE_PLUGIN_PATH = '/custom/node_modules/oh-my-opencode-slim';
+    writeFileSync(
+      configPath,
+      JSON.stringify({ plugin: ['other', 'oh-my-opencode-slim@1.0.0'] }),
+    );
+
+    const result = await addPluginToOpenCodeConfig();
+    expect(result.success).toBe(true);
+
+    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.plugin).toEqual([
+      'other',
+      '/custom/node_modules/oh-my-opencode-slim',
+    ]);
+  });
+
+  test('detectCurrentConfig recognizes node_modules plugin path', () => {
+    const configPath = join(tmpDir, 'opencode', 'opencode.json');
+    paths.ensureConfigDir();
+
+    writeFileSync(
+      configPath,
+      JSON.stringify({ plugin: ['/tmp/node_modules/oh-my-opencode-slim'] }),
+    );
+
+    const detected = detectCurrentConfig();
+    expect(detected.isInstalled).toBe(true);
+  });
+
   test('writeLiteConfig writes lite config', () => {
     const litePath = join(tmpDir, 'opencode', 'oh-my-opencode-slim.json');
     paths.ensureConfigDir();

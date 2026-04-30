@@ -27,6 +27,14 @@ If `opencode` is not on `PATH`, pass an explicit executable path:
 bunx oh-my-opencode-slim@latest install --opencode-path=/custom/bin/opencode
 ```
 
+If you need to pin the plugin to a specific local/package-manager path,
+set `OPENCODE_PLUGIN_PATH` before running install:
+
+```bash
+OPENCODE_PLUGIN_PATH=/custom/node_modules/oh-my-opencode-slim \
+  bunx oh-my-opencode-slim@latest install
+```
+
 Then authenticate:
 
 ```bash

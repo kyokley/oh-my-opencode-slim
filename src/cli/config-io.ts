@@ -21,6 +21,28 @@ import type {
 } from './types';
 
 const PACKAGE_NAME = 'oh-my-opencode-slim';
+const PLUGIN_PATH_ENV = 'OPENCODE_PLUGIN_PATH';
+
+function normalizePathForMatch(path: string): string {
+  return path.replaceAll('\\', '/');
+}
+
+function isPluginEntry(entry: string): boolean {
+  if (entry === PACKAGE_NAME || entry.startsWith(`${PACKAGE_NAME}@`)) {
+    return true;
+  }
+
+  const normalizedPath = normalizePathForMatch(entry);
+  return (
+    normalizedPath.endsWith(`/node_modules/${PACKAGE_NAME}`) ||
+    normalizedPath.includes(`/node_modules/${PACKAGE_NAME}/`)
+  );
+}
+
+function getPluginEntry(): string {
+  const pluginPathOverride = process.env[PLUGIN_PATH_ENV]?.trim();
+  return pluginPathOverride || PACKAGE_NAME;
+}
 
 /**
  * Strip JSON comments (single-line // and multi-line) and trailing commas for JSONC support.
@@ -116,14 +138,15 @@ export async function addPluginToOpenCodeConfig(): Promise<ConfigMergeResult> {
     }
     const config = parsedConfig ?? {};
     const plugins = config.plugin ?? [];
+    const pluginEntry = getPluginEntry();
 
     // Remove existing oh-my-opencode-slim entries
     const filteredPlugins = plugins.filter(
-      (p) => p !== PACKAGE_NAME && !p.startsWith(`${PACKAGE_NAME}@`),
+      (p) => !isPluginEntry(p) && p !== pluginEntry,
     );
 
     // Add fresh entry
-    filteredPlugins.push(PACKAGE_NAME);
+    filteredPlugins.push(pluginEntry);
     config.plugin = filteredPlugins;
 
     writeConfig(configPath, config);
@@ -392,7 +415,7 @@ export function detectCurrentConfig(): DetectedConfig {
   if (!config) return result;
 
   const plugins = config.plugin ?? [];
-  result.isInstalled = plugins.some((p) => p.startsWith(PACKAGE_NAME));
+  result.isInstalled = plugins.some((p) => isPluginEntry(p));
   result.hasAntigravity = plugins.some((p) =>
     p.startsWith('opencode-antigravity-auth'),
   );
